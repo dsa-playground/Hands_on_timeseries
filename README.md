@@ -1,2 +1,7 @@
-# Hands_on_timeseries
-Project with an introduction into timeseries forecasting (low level)
+# Repository developed for training purposes. 
+
+TO DO
+
+### Some small extra info:
+Used dataset: ...
+Language: Dutch
