@@ -10,6 +10,21 @@ def load_timeseries_data():
     df = df.asfreq('D')
     return df
 
+def transform_index_to_current_year(df):
+    # Get the current year
+    current_year = pd.Timestamp.now().year
+    
+    # Find the maximum year in the timestamp index
+    max_year = df.index.year.max()
+    
+    # Calculate the delta
+    delta_years = current_year - max_year
+    
+    # Apply the delta to all the years in the timestamp index
+    df.index = df.index + pd.DateOffset(years=delta_years)
+    
+    return df
+
 def collect_int_input(question, boundaries=[]):
     """Collect integer input given a question and range.
 

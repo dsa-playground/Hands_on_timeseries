@@ -1,7 +1,7 @@
 import datetime as datetime
 import pandas as pd
 from scripts.evaluate.evaluate import plot_prediction_with_shapes
-from scripts.preprocess.preprocess import load_timeseries_data, collect_str_input, make_X_y, combine_dfs_of_models, calibrate_dates
+from scripts.preprocess.preprocess import load_timeseries_data, transform_index_to_current_year, collect_str_input, make_X_y, combine_dfs_of_models, calibrate_dates
 from scripts.evaluate.evaluate import plot_timeseries, plot_errors, plot_distribution, accuracy, calc_r2_score, calc_sum_of_errors, calc_average_error, calc_max_error, calc_MAE, calc_MAPE, calc_RMSE
 from scripts.model.model import calc_average, predict_with_average, calc_moving_average, LinearRegressionTrain, LinearRegressionPredict
 
@@ -15,6 +15,7 @@ def bekijk_data():
 
 def laad_data():
     df = load_timeseries_data()
+    df = transform_index_to_current_year(df)
     df = df.drop(columns=['Inkoop'])
     return df
 
