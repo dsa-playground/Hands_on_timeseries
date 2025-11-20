@@ -20,7 +20,11 @@ def laad_data():
     return df
 
 def bekijk_ziekteverzuim(df):
-    plot_timeseries(df, 'Ziekteverzuim')
+    max_date=pd.Timestamp.now().strftime('%Y-%m-%d')
+    plot_timeseries(
+        df=df, 
+        col='Ziekteverzuim',
+        date_untill=max_date)
 
 def bekijk_clienten(df):
     plot_timeseries(df, 'Cliënten')
@@ -175,7 +179,10 @@ def pas_regressie_toe(data,
         if onderwerp == 'Cliënten':
             transformatie = 'lineair'
         elif onderwerp in ['Ziekteverzuim', 'Flexpool']:
-            transformatie = 'spline'
+            if graad == 1:
+                transformatie = 'lineair'
+            else:
+                transformatie = 'spline'
     transformatie = str(transformatie).lower()
     if isinstance(jaarlijks_seizoenspatroon, bool) is False:
         raise ValueError("Het getal voor jaarlijks_seizoenspatroon moet een boolean (True/False) zijn.")
@@ -331,7 +338,7 @@ def voorspel(
 
 def voorspel_met_voortschrijdend_gemiddelde(data,
         onderwerp='Ziekteverzuim',
-        voorspellen_tot_datum='2025-01-01',
+        voorspellen_tot_datum=None,
         vensterlengte=7,
         verschuiving=0,
         jaarlijks_patroon=None,
@@ -342,13 +349,25 @@ def voorspel_met_voortschrijdend_gemiddelde(data,
     
     _data = data.copy()
     vanaf_datum_train_periode = _data.index.min()
-    maximum_data_dataset = datetime.datetime(2024,12,31)
+    maximum_data_dataset = _data.index.max()
     date_yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
     maximum_date = min(date_yesterday, maximum_data_dataset)
     tot_datum_train_periode = maximum_date
     vanaf_datum_test_periode = maximum_date
-    tot_datum_test_periode = voorspellen_tot_datum
-
+    if voorspellen_tot_datum is not None:
+        tot_datum_test_periode = voorspellen_tot_datum
+    else:
+        period_left = data.index.max() - date_yesterday
+        if period_left.days < 90:
+            if date_yesterday.month+4 > 12:
+                year_predict = date_yesterday.year + 1
+                month_predict = (date_yesterday.month+4) % 12
+            first_day_4_months_ahead_of_yesterday = datetime.datetime(year_predict, month_predict, 1)
+            tot_datum_test_periode = first_day_4_months_ahead_of_yesterday.strftime('%Y-%m-%d')
+        else:
+            tot_datum_test_periode = maximum_data_dataset.strftime('%Y-%m-%d')
+    # print(f"train periode: {vanaf_datum_train_periode} tot {tot_datum_train_periode}")
+    # print(f"test periode: {vanaf_datum_test_periode} tot {tot_datum_test_periode}")
     df = pas_voortschrijdend_gemiddelde_toe(
             data=_data,
             onderwerp=onderwerp,
@@ -364,7 +383,7 @@ def voorspel_met_voortschrijdend_gemiddelde(data,
 
 def voorspel_met_regressie(data,
         onderwerp='Ziekteverzuim',
-        voorspellen_tot_datum='2025-01-01',
+        voorspellen_tot_datum=None,
         vensterlengte=None,
         verschuiving=None,
         jaarlijks_patroon=False,
@@ -375,12 +394,23 @@ def voorspel_met_regressie(data,
 
     _data = data.copy()
     vanaf_datum_train_periode = _data.index.min()
-    maximum_data_dataset = datetime.datetime(2024,12,31)
+    maximum_data_dataset = _data.index.max()
     date_yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
     maximum_date = min(date_yesterday, maximum_data_dataset)
     tot_datum_train_periode = maximum_date
     vanaf_datum_test_periode = maximum_date
-    tot_datum_test_periode = voorspellen_tot_datum
+    if voorspellen_tot_datum is not None:
+        tot_datum_test_periode = voorspellen_tot_datum
+    else:
+        period_left = data.index.max() - date_yesterday
+        if period_left.days < 90:
+            if date_yesterday.month+4 > 12:
+                year_predict = date_yesterday.year + 1
+                month_predict = (date_yesterday.month+4) % 12
+            first_day_4_months_ahead_of_yesterday = datetime.datetime(year_predict, month_predict, 1)
+            tot_datum_test_periode = first_day_4_months_ahead_of_yesterday.strftime('%Y-%m-%d')
+        else:
+            tot_datum_test_periode = maximum_data_dataset.strftime('%Y-%m-%d')
 
     df = pas_regressie_toe(
             data=_data,
@@ -392,7 +422,8 @@ def voorspel_met_regressie(data,
             tot_datum_train_periode = tot_datum_train_periode,
             vanaf_datum_test_periode = vanaf_datum_test_periode,
             tot_datum_test_periode = tot_datum_test_periode,
-            zie_traintest_periodes=zie_traintest_periodes
+            zie_traintest_periodes=zie_traintest_periodes,
+            transformatie='lineair'
         )
 
     return df                

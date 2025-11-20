@@ -234,8 +234,10 @@ def make_X_y(df, onderwerp, vanaf_datum_train_periode, tot_datum_train_periode, 
     if tot_datum_train_periode > df.index.max():
         raise ValueError("Let op: tot_datum_train_periode moet kleiner zijn dan de maximale datum in de dataset. Kies andere waarden aub.")
     
-    minimum_date = datetime.datetime(2019,1,1)
-    maximum_data_dataset = datetime.datetime(2024,12,31)
+    # minimum_date = datetime.datetime(2019,1,1)
+    # maximum_data_dataset = datetime.datetime(2024,12,31)
+    minimum_date = df.index.min()
+    maximum_data_dataset = df.index.max()
     date_yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
     maximum_date = min(date_yesterday, maximum_data_dataset)
     data = df.loc[(df.index >= minimum_date) & (df.index < maximum_date)].copy()
